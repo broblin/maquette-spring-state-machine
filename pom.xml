@@ -10,6 +10,9 @@
     <packaging>jar</packaging>
 
     <properties>
+        <!-- Specify project java version -->
+        <java.version>1.8</java.version>
+
         <dependency.spring-boot.version>1.4.3.RELEASE</dependency.spring-boot.version>
         <dependency.spring-state-machine.version>1.2.0.RELEASE</dependency.spring-state-machine.version>
         <dependency.spring.data.jpa.version>1.10.3.RELEASE</dependency.spring.data.jpa.version>
@@ -51,6 +54,13 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${dependency.spring-boot.version}</version>
+            <!-- scope>test</scope -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
             <version>${dependency.spring-boot.version}</version>
         </dependency>
@@ -77,6 +87,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.statemachine</groupId>
+            <artifactId>spring-statemachine-data-jpa</artifactId>
+            <version>${dependency.spring-state-machine.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>${dependency.jackson.version}</version>
@@ -95,12 +111,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>${dependency.spring-boot.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.statemachine</groupId>
             <artifactId>spring-statemachine-test</artifactId>
             <version>${dependency.spring-state-machine.version}</version>
@@ -110,9 +120,17 @@
 
     <build>
         <plugins>
+            <!-- For code version definition -->
+
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <debug>true</debug>
+                    <debuglevel>lines,vars,source</debuglevel>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

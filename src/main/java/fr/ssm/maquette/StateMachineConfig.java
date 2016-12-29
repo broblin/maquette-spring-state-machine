@@ -1,12 +1,21 @@
 package fr.ssm.maquette;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.statemachine.config.EnableStateMachine;
+import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
+import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
+import org.springframework.statemachine.config.builders.StateMachineModelConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
+import org.springframework.statemachine.config.model.StateMachineModelFactory;
+import org.springframework.statemachine.data.*;
+import org.springframework.statemachine.data.support.StateMachineJackson2RepositoryPopulatorFactoryBean;
 import org.springframework.statemachine.listener.StateMachineListener;
 import org.springframework.statemachine.listener.StateMachineListenerAdapter;
 import org.springframework.statemachine.state.State;
@@ -17,46 +26,35 @@ import java.util.EnumSet;
  * Created by broblin on 16/12/16.
  */
 @Configuration
-@EnableStateMachine
-public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter<States, Events> {
-
-    @Override
-    public void configure(StateMachineConfigurationConfigurer<States, Events> config)
-            throws Exception {
-        config
-                .withConfiguration()
-                .autoStartup(true)
-                .listener(listener());
-    }
-
-    @Override
-    public void configure(StateMachineStateConfigurer<States, Events> states)
-            throws Exception {
-        states
-                .withStates()
-                .initial(States.SI)
-                .states(EnumSet.allOf(States.class));
-    }
-
-    @Override
-    public void configure(StateMachineTransitionConfigurer<States, Events> transitions)
-            throws Exception {
-        transitions
-                .withExternal()
-                .source(States.SI).target(States.S1).event(Events.E1)
-                .and()
-                .withExternal()
-                .source(States.S1).target(States.S2).event(Events.E2);
-    }
+public class StateMachineConfig {
 
     @Bean
-    public StateMachineListener<States, Events> listener() {
-        return new StateMachineListenerAdapter<States, Events>() {
-            @Override
-            public void stateChanged(State<States, Events> from, State<States, Events> to) {
-                System.out.println("State change to " + to.getId());
-            }
-        };
+    public StateMachineJackson2RepositoryPopulatorFactoryBean jackson2RepositoryPopulatorFactoryBean() {
+        StateMachineJackson2RepositoryPopulatorFactoryBean factoryBean = new StateMachineJackson2RepositoryPopulatorFactoryBean();
+        factoryBean.setResources(new Resource[]{new ClassPathResource("data.json")});
+        return factoryBean;
+    }
+
+    @Configuration
+    @EnableStateMachineFactory
+    public static class Config extends StateMachineConfigurerAdapter<String, String> {
+
+        @Autowired
+        private StateRepository<? extends RepositoryState> stateRepository;
+
+        @Autowired
+        private TransitionRepository<? extends RepositoryTransition> transitionRepository;
+
+        @Override
+        public void configure(StateMachineModelConfigurer<String, String> model) throws Exception {
+            model
+                    .withModel()
+                    .factory(modelFactory());
+        }
+
+        @Bean
+        public StateMachineModelFactory<String, String> modelFactory() {
+            return new RepositoryStateMachineModelFactory(stateRepository, transitionRepository);
+        }
     }
 }

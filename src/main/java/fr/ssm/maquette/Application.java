@@ -14,16 +14,7 @@ import org.springframework.statemachine.StateMachine;
 @SpringBootApplication
 @EnableAutoConfiguration
 @ComponentScan({"fr.ssm.maquette"})
-public class Application implements CommandLineRunner {
-
-    @Autowired
-    private StateMachine<States, Events> stateMachine;
-
-    @Override
-    public void run(String... args) throws Exception {
-        stateMachine.sendEvent(Events.E1);
-        stateMachine.sendEvent(Events.E2);
-    }
+public class Application {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
