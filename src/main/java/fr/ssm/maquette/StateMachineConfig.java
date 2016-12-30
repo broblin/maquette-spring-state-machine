@@ -3,6 +3,7 @@ package fr.ssm.maquette;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.StateContext;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachine;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
@@ -58,7 +59,7 @@ public class StateMachineConfig
                 .source(States.SI).target(States.S3).event(Events.INIT_TO_S3)
                 .and()
                 .withExternal()
-                .source(States.S1).target(States.S2).event(Events.E2).action(action())
+                .source(States.S1).target(States.S2).event(Events.E2).action(action(),errorAction())
                 .and()
                 .withExternal()
                 .source(States.S2).target(States.S3).event(Events.E3);
@@ -71,19 +72,34 @@ public class StateMachineConfig
             public void stateChanged(State<States, Events> from, State<States, Events> to) {
                 System.out.println("State change to " + to.getId());
             }
+
+            @Override
+            public void stateMachineError(StateMachine<States, Events> stateMachine, Exception exception) {
+                System.out.println(String.format("an exception an occured on the stateMachineListener : %s", exception.getMessage()));
+            }
         };
     }
 
     @Bean
     public Action<States, Events> action() {
-        return new Action<States, Events>() {
-
-            @Override
-            public void execute(StateContext<States, Events> context) {
+        return  context -> {
                 // do something
-                System.out.println(String.format("action déclenchée par cette évènement : %s à partir de cette source : %s pour cette cible : %s",context.getEvent(),context.getSource().getId(),context.getTarget().getId()));
-                System.out.println(String.format("id de commande récupéré %s",context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL)));
-            }
+                System.out.println(String.format("action occured for this event : %s from this source : %s to this target : %s",context.getEvent(),context.getSource().getId(),context.getTarget().getId()));
+
+                if(Long.valueOf(-10L).equals(context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL))){
+                   throw new RuntimeException("unexpected exception simulation");
+                }else{
+                    System.out.println(String.format("order id : %s",context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL)));
+                }
+            };
+    }
+
+    @Bean
+    public Action<States, Events> errorAction() {
+        return  context -> {
+                // RuntimeException("MyError") added to context
+                Exception exception = context.getException();
+            System.out.println(String.format("an exception an occured %s on the order : %s", exception.getMessage(),context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL)));
         };
     }
 }
