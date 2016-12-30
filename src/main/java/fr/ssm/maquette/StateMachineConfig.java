@@ -2,6 +2,8 @@ package fr.ssm.maquette;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.statemachine.StateContext;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachine;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -47,7 +49,19 @@ public class StateMachineConfig
                 .source(States.SI).target(States.S1).event(Events.E1)
                 .and()
                 .withExternal()
-                .source(States.S1).target(States.S2).event(Events.E2);
+                .source(States.SI).target(States.S1).event(Events.INIT_TO_S1)
+                .and()
+                .withExternal()
+                .source(States.SI).target(States.S2).event(Events.INIT_TO_S2)
+                .and()
+                .withExternal()
+                .source(States.SI).target(States.S3).event(Events.INIT_TO_S3)
+                .and()
+                .withExternal()
+                .source(States.S1).target(States.S2).event(Events.E2).action(action())
+                .and()
+                .withExternal()
+                .source(States.S2).target(States.S3).event(Events.E3);
     }
 
     @Bean
@@ -56,6 +70,19 @@ public class StateMachineConfig
             @Override
             public void stateChanged(State<States, Events> from, State<States, Events> to) {
                 System.out.println("State change to " + to.getId());
+            }
+        };
+    }
+
+    @Bean
+    public Action<States, Events> action() {
+        return new Action<States, Events>() {
+
+            @Override
+            public void execute(StateContext<States, Events> context) {
+                // do something
+                System.out.println(String.format("action déclenchée par cette évènement : %s à partir de cette source : %s pour cette cible : %s",context.getEvent(),context.getSource().getId(),context.getTarget().getId()));
+                System.out.println(String.format("id de commande récupéré %s",context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL)));
             }
         };
     }
