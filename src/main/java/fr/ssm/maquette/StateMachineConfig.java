@@ -6,6 +6,7 @@ import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachine;
+import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
@@ -20,7 +21,7 @@ import java.util.EnumSet;
  * Created by broblin on 16/12/16.
  */
 @Configuration
-@EnableStateMachine
+@EnableStateMachineFactory
 public class StateMachineConfig
         extends EnumStateMachineConfigurerAdapter<States, Events> {
 
@@ -99,7 +100,8 @@ public class StateMachineConfig
         return  context -> {
                 // RuntimeException("MyError") added to context
                 Exception exception = context.getException();
-            System.out.println(String.format("an exception an occured %s on the order : %s", exception.getMessage(),context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL)));
+                StateMachine stateMachine = context.getStateMachine();
+            System.out.println(String.format("an exception an occured %s on the order : %s for this stateMachine state : %s", exception.getMessage(),context.getMessage().getHeaders().get(Application.ORDER_ID_LABEL),stateMachine.getState()));
         };
     }
 }
