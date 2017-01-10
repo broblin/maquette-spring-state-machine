@@ -10,6 +10,8 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
+import org.springframework.statemachine.persist.DefaultStateMachinePersister;
+import org.springframework.statemachine.persist.StateMachinePersister;
 
 /**
  * Created by broblin on 16/12/16.
@@ -27,6 +29,9 @@ public class Application implements CommandLineRunner {
     Long orderIdTest = 10L;
     Long orderIdTestWithError = -10L;
 
+    InMemoryStateMachinePersist stateMachinePersist = new InMemoryStateMachinePersist();
+    StateMachinePersister<States, Events, String> persister = new DefaultStateMachinePersister<>(stateMachinePersist);
+
     @Override
     public void run(String... args) throws Exception {
         StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
@@ -40,10 +45,30 @@ public class Application implements CommandLineRunner {
 
         System.out.println(String.format("state machine final state  %s",stateMachine.getState().getId()));
 
-        System.out.println(String.format("state machine final with id : %s state  %s",orderIdTest,stateMachineFactory.getStateMachine(orderIdTest.toString()).getState().getId()));
+        System.out.println(String.format("state machine final with id : %s state  %s",orderIdTest,restoreStateMachine(stateMachineFactory.getStateMachine(orderIdTest.toString())).getState().getId()));
+
+        System.out.println(String.format("state machine final with id : %s state  %s",orderIdTestWithError,restoreStateMachine(stateMachineFactory.getStateMachine(orderIdTestWithError.toString())).getState().getId()));
     }
 
-    public void sendMessageWithE2(Long id){
+    /**
+     *
+     * @param stateMachine
+     */
+    public void saveStateMachine(StateMachine<States, Events> stateMachine) throws Exception {
+        persister.persist(stateMachine,stateMachine.getId());
+    }
+
+    /**
+     *
+     * @param stateMachine
+     * @return
+     * @throws Exception
+     */
+    public StateMachine<States, Events> restoreStateMachine(StateMachine<States, Events> stateMachine) throws Exception {
+        return persister.restore(stateMachine,stateMachine.getId());
+    }
+
+    public void sendMessageWithE2(Long id) throws Exception {
         StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine(id.toString());
         stateMachine.sendEvent(Events.INIT_TO_S1);
         Message<Events> message = MessageBuilder
@@ -52,6 +77,7 @@ public class Application implements CommandLineRunner {
                 .build();
 
         stateMachine.sendEvent(message);
+        saveStateMachine(stateMachine);
     }
 
     public void simulateUnexpectedError(){
